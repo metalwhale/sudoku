@@ -1,0 +1,7 @@
+services:
+  app:
+    build: ./app
+    volumes:
+      - ../:/home/node/sudoku
+    tty: true
+    working_dir: /home/node/sudoku/app
