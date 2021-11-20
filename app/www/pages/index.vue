@@ -1,9 +1,11 @@
 <template>
-  <Tutorial/>
+  <Tutorial />
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue from "vue";
+import * as wasm from "wasm";
 
-export default Vue.extend({})
+wasm.greet();
+export default Vue.extend({});
 </script>

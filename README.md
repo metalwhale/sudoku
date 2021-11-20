@@ -2,7 +2,7 @@
 Sudoku resolver
 
 ## How to run
-- Follow instructions in [infra](./infra)
+- Follow instructions in [infra](./infra) and [app](./app)
 
 ## Kudos
 ### References

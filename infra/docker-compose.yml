@@ -1,6 +1,8 @@
 services:
   app:
     build: ./app
+    ports:
+      - "$PORT:3000"
     volumes:
       - ../:/home/node/sudoku
     tty: true

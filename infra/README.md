@@ -41,3 +41,9 @@
   ```bash
   app$ rm -rf www/.git
   ```
+
+## VSCode extensions:
+- `tamasfe.even-better-toml`: [Even Better TOML](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml)
+- `matklad.rust-analyzer`: [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=matklad.rust-analyzer)
+- `octref.vetur`: [Vetur](https://marketplace.visualstudio.com/items?itemName=octref.vetur)
+- `esbenp.prettier-vscode`: [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
