@@ -7691,6 +7691,13 @@ tr46@~0.0.3:
   resolved "https://registry.yarnpkg.com/tr46/-/tr46-0.0.3.tgz#8184fd347dac9cdc185992f3a6622e14b9d9ab6a"
   integrity sha1-gYT9NH2snNwYWZLzpmIuFLnZq2o=
 
+tractjs@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/tractjs/-/tractjs-0.4.0.tgz#c7376ef0da8bf71780304b4277fac6b15c8b2dc7"
+  integrity sha512-mxZBsLj7tLe+btz2aQKdCigvNIVbcmkVHmKl0MfAu0TFs3biJImouGCFCV+i6eNrG4PpX9atDGd28JD83N+Zxg==
+  dependencies:
+    web-worker "^1.0.0"
+
 ts-loader@^8.0.17:
   version "8.3.0"
   resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-8.3.0.tgz#83360496d6f8004fab35825279132c93412edf33"
@@ -8071,6 +8078,11 @@ watchpack@^1.7.4:
   optionalDependencies:
     chokidar "^3.4.1"
     watchpack-chokidar2 "^2.0.1"
+
+web-worker@^1.0.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/web-worker/-/web-worker-1.2.0.tgz#5d85a04a7fbc1e7db58f66595d7a3ac7c9c180da"
+  integrity sha512-PgF341avzqyx60neE9DD+XS26MMNMoUQRz9NOZwW32nPQrF6p77f1htcnjBSEV8BGMKZ16choqUG4hyI0Hx7mA==
 
 webidl-conversions@^3.0.0:
   version "3.0.1"
