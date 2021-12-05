@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <canvas ref="canvas" :width="videoWidth" :height="videoHeight"></canvas>
+    <canvas ref="canvas" :width="width" :height="height"></canvas>
     <video ref="video" autoplay></video>
   </div>
 </template>
@@ -14,22 +14,22 @@ import { extractGrid, recognizeDigit, writeImage } from "~/assets/ts/image";
 export default Vue.extend({
   data() {
     return {
-      videoWidth: 0,
-      videoHeight: 0,
+      width: 0,
+      height: 0,
     };
   },
   async mounted() {
-    const canvas = this.$refs.canvas as HTMLCanvasElement;
+    // Start camera
     const video = this.$refs.video as HTMLVideoElement;
     video.srcObject = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: false,
     });
     const { width, height } = video.srcObject.getVideoTracks()[0].getSettings();
-    this.videoWidth = width!;
-    this.videoHeight = height!;
-    const context = canvas.getContext("2d")!;
-    const CELL_SIZE = 30;
+    this.width = width!;
+    this.height = height!;
+    // Load model
+    const CELL_SIZE = 20;
     const CELLS_NUM_PER_DIM = 9;
     const INPUT_SHAPE = [CELLS_NUM_PER_DIM ** 2, CELL_SIZE, CELL_SIZE, 1];
     const model = await tractjs.load("/model.onnx", {
@@ -37,23 +37,30 @@ export default Vue.extend({
         0: ["float32", INPUT_SHAPE],
       },
     });
-    setInterval(async () => {
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      // TODO: `cv["onRuntimeInitialized"]`
-      const data = context.getImageData(0, 0, canvas.width, canvas.height);
-      const mat = cv.matFromImageData(data);
+    // Get contexts
+    const buffCanvas = document.createElement("canvas");
+    buffCanvas.width = this.width;
+    buffCanvas.height = this.height;
+    const buffContext = buffCanvas.getContext("2d")!;
+    const context = (this.$refs.canvas as HTMLCanvasElement).getContext("2d")!;
+    // Detect the grid, solve it and show result
+    const solve = async () => {
+      buffContext.drawImage(video, 0, 0, this.width, this.height);
+      const mat = cv.matFromImageData(buffContext.getImageData(0, 0, this.width, this.height));
       const grid = extractGrid(mat, CELL_SIZE, CELLS_NUM_PER_DIM);
       if (grid !== undefined) {
         const [coord, data] = grid;
+        const digits = await recognizeDigit(data, INPUT_SHAPE, model);
+        console.log(digits);
         for (let point of coord.points) {
           cv.circle(mat, new cv.Point(point.x, point.y), 8, new cv.Scalar(255, 255, 255, 255), cv.FILLED);
         }
-        const digits = await recognizeDigit(data, INPUT_SHAPE, model);
-        console.log(digits);
       }
       writeImage(mat, context);
       mat.delete();
-    }, 100);
+      requestAnimationFrame(solve);
+    };
+    requestAnimationFrame(solve);
   },
 });
 </script>
