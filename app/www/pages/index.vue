@@ -9,7 +9,7 @@
 import Vue from "vue";
 import cv from "@techstark/opencv-js";
 import * as tractjs from "tractjs";
-import { extractGrid, recognizeDigit, writeImage } from "~/assets/ts/image";
+import { detectGridCoord, extractData, recognizeDigit, writeImage } from "~/assets/ts/image";
 
 export default Vue.extend({
   data() {
@@ -47,17 +47,20 @@ export default Vue.extend({
     const solve = async () => {
       buffContext.drawImage(video, 0, 0, this.width, this.height);
       const mat = cv.matFromImageData(buffContext.getImageData(0, 0, this.width, this.height));
-      const grid = extractGrid(mat, CELL_SIZE, CELLS_NUM_PER_DIM);
-      if (grid !== undefined) {
-        const [coord, data] = grid;
-        const digits = await recognizeDigit(data, INPUT_SHAPE, model);
+      const gridSize = CELL_SIZE * CELLS_NUM_PER_DIM;
+      const gridMat = new cv.Mat(gridSize, gridSize, cv.CV_8UC3); // TODO: Use gray mode
+      const gridCoord = detectGridCoord(mat, gridMat);
+      if (gridCoord !== undefined) {
+        const gridData = extractData(gridMat, CELL_SIZE, CELL_SIZE);
+        const digits = await recognizeDigit(gridData, INPUT_SHAPE, model);
         console.log(digits);
-        for (let point of coord.points) {
+        for (let point of gridCoord.points) {
           cv.circle(mat, new cv.Point(point.x, point.y), 8, new cv.Scalar(255, 255, 255, 255), cv.FILLED);
         }
       }
       writeImage(mat, context);
       mat.delete();
+      gridMat.delete();
       requestAnimationFrame(solve);
     };
     requestAnimationFrame(solve);

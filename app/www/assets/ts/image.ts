@@ -1,7 +1,7 @@
 import cv from "@techstark/opencv-js";
 import * as tractjs from "tractjs";
 
-export function extractGrid(mat: cv.Mat, cellSize: number, cellsNumPerDim: number): [Quadrangle, Float32Array] | undefined {
+export function detectGridCoord(mat: cv.Mat, gridMat: cv.Mat): Quadrangle | undefined {
   // Apply a threshold
   const grayMat = new cv.Mat(mat);
   cv.cvtColor(grayMat, grayMat, cv.COLOR_RGBA2GRAY);
@@ -28,29 +28,33 @@ export function extractGrid(mat: cv.Mat, cellSize: number, cellsNumPerDim: numbe
     approxContour.delete();
   }
   contours.delete();
-  const matArea = grayMat.size().width * grayMat.size().height;
-  if (largestQuad !== undefined && largestArea / matArea > 0.35) {
+  const matArea = grayMat.cols * grayMat.rows;
+  let gridCoord: Quadrangle | undefined = undefined;
+  if (largestQuad !== undefined && largestArea > 0.35 * matArea) {
     // Copy and project
-    const gridSize = cellSize * cellsNumPerDim;
-    const gridMat = transform(grayMat, largestQuad, gridSize);
-    // Extract the data for each cell
-    const gridData = new Float32Array(cellSize ** 2 * cellsNumPerDim ** 2);
-    let i = 0;
-    for (let cellY = 0; cellY < gridSize; cellY += cellSize) {
-      for (let cellX = 0; cellX < gridSize; cellX += cellSize) {
-        const cellData = new Float32Array(cellSize ** 2);
-        for (let y = 0; y < cellSize; y++) {
-          for (let x = 0; x < cellSize; x++) {
-            cellData[y * cellSize + x] = gridMat.data[(cellY + y) * gridSize + (cellX + x)] / 255;
-          }
-        }
-        gridData.set(cellData, i++ * cellSize ** 2);
-      }
-    }
-    gridMat.delete();
-    return [largestQuad, gridData];
+    transform(grayMat, largestQuad, gridMat, Quadrangle.fromSize(gridMat.cols, gridMat.rows));
+    gridCoord = largestQuad;
   }
   grayMat.delete();
+  return gridCoord;
+}
+
+export function extractData(gridMat: cv.Mat, cellWidth: number, cellHeight: number): Float32Array {
+  const gridData = new Float32Array(gridMat.cols * gridMat.rows);
+  let i = 0;
+  // Extract the data for each cell
+  for (let cellY = 0; cellY < gridMat.rows; cellY += cellHeight) {
+    for (let cellX = 0; cellX < gridMat.cols; cellX += cellWidth) {
+      const cellData = new Float32Array(cellWidth * cellHeight);
+      for (let y = 0; y < cellHeight; y++) {
+        for (let x = 0; x < cellWidth; x++) {
+          cellData[y * cellHeight + x] = gridMat.data[(cellY + y) * gridMat.rows + (cellX + x)] / 255;
+        }
+      }
+      gridData.set(cellData, i++ * cellData.length);
+    }
+  }
+  return gridData;
 }
 
 export async function recognizeDigit(gridData: Float32Array, inputShape: number[], model: tractjs.Model): Promise<number[]> {
@@ -71,17 +75,14 @@ export function writeImage(mat: cv.Mat, context: CanvasRenderingContext2D) {
   context.putImageData(data, 0, 0);
 }
 
-function transform(srcMat: cv.Mat, srcCoord: Quadrangle, dstSize: number): cv.Mat {
+function transform(srcMat: cv.Mat, srcCoord: Quadrangle, dstMat: cv.Mat, dstCoord: Quadrangle) {
   const srcCoordMat = cv.matFromArray(4, 2, cv.CV_32F, srcCoord.toArray());
-  const dstCoordMat = cv.matFromArray(4, 2, cv.CV_32F, Quadrangle.fromTopLeftAndSize(0, 0, dstSize).toArray());
+  const dstCoordMat = cv.matFromArray(4, 2, cv.CV_32F, dstCoord.toArray());
   const transformation = cv.getPerspectiveTransform(srcCoordMat, dstCoordMat);
   srcCoordMat.delete();
   dstCoordMat.delete();
-  // TODO: Use gray mode
-  const dstMat = new cv.Mat(dstSize, dstSize, cv.CV_8UC3);
-  cv.warpPerspective(srcMat, dstMat, transformation, new cv.Size(dstSize, dstSize));
+  cv.warpPerspective(srcMat, dstMat, transformation, dstMat.size());
   transformation.delete();
-  return dstMat;
 }
 
 class Point {
@@ -127,13 +128,8 @@ class Quadrangle {
     return new Quadrangle(topLeft, topRight, bottomLeft, bottomRight);
   }
 
-  public static fromTopLeftAndSize(topLeftX: number, topLeftY: number, size: number): Quadrangle {
-    return new Quadrangle(
-      new Point(topLeftX, topLeftY),
-      new Point(topLeftX + size, topLeftY),
-      new Point(topLeftX, topLeftY + size),
-      new Point(topLeftX + size, topLeftY + size)
-    );
+  public static fromSize(width: number, height: number): Quadrangle {
+    return new Quadrangle(new Point(0, 0), new Point(width, 0), new Point(0, height), new Point(width, height));
   }
 
   public toArray(): number[] {
