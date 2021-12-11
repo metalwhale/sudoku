@@ -80,7 +80,7 @@ export function renderDigits(mat: cv.Mat, coord: Quadrangle, gridDigits: number[
       // TODO: Properly select font size and set anchor point to middle
       const cellWidth = digitsMat.cols / row.length;
       const position = new cv.Point(j * cellWidth + 15, (i + 1) * cellHeight - 10);
-      cv.putText(digitsMat, `${digit}`, position, cv.FONT_HERSHEY_SIMPLEX, 1, new cv.Scalar(0, 0, 1, 1), 2);
+      cv.putText(digitsMat, `${digit == 0 ? "" : digit}`, position, cv.FONT_HERSHEY_SIMPLEX, 1, new cv.Scalar(0, 0, 1, 1), 2);
     }
   }
   // Merge into rendered mat

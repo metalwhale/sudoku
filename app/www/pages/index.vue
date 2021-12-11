@@ -9,6 +9,7 @@
 import Vue from "vue";
 import cv from "@techstark/opencv-js";
 import * as tractjs from "tractjs";
+import * as wasm from "wasm";
 import { detectGridCoord, extractData, recognizeDigits, renderDigits, writeImage } from "~/assets/ts/image";
 
 export default Vue.extend({
@@ -53,11 +54,23 @@ export default Vue.extend({
       if (gridCoord !== undefined) {
         const gridData = extractData(gridMat, CELL_SIZE, CELL_SIZE);
         const digits = await recognizeDigits(new tractjs.Tensor(gridData, INPUT_SHAPE), model);
-        const gridDigits: number[][] = [];
-        for (let i = 0; i < digits.length / CELLS_NUM_PER_DIM; i++) {
-          gridDigits.push(digits.slice(i * CELLS_NUM_PER_DIM, (i + 1) * CELLS_NUM_PER_DIM));
+        const solution = wasm.solve(digits);
+        if (solution !== undefined) {
+          const gridDigits: number[][] = [];
+          for (let i = 0; i < solution.length / CELLS_NUM_PER_DIM; i++) {
+            const row = solution.slice(i * CELLS_NUM_PER_DIM, (i + 1) * CELLS_NUM_PER_DIM);
+            for (let j = 0; j < row.length; j++) {
+              // Do not show provided digits
+              if (digits[i * CELLS_NUM_PER_DIM + j] != 0) {
+                row[j] = 0;
+              }
+            }
+            gridDigits.push(row);
+          }
+          renderDigits(mat, gridCoord, gridDigits);
+        } else {
+          console.log("No solution.");
         }
-        renderDigits(mat, gridCoord, gridDigits);
         for (let point of gridCoord.points) {
           cv.circle(mat, new cv.Point(point.x, point.y), 8, new cv.Scalar(255, 255, 255, 255), cv.FILLED);
         }

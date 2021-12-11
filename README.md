@@ -13,3 +13,4 @@ Sudoku resolver
 - [NuxtJS](https://nuxtjs.org/)
 - [OpenCV.js](https://docs.opencv.org/master/d5/d10/tutorial_js_root.html)
 - [tractjs](https://github.com/bminixhofer/tractjs)
+- [sudoku](https://docs.rs/sudoku)
