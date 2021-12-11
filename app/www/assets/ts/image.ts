@@ -57,10 +57,9 @@ export function extractData(gridMat: cv.Mat, cellWidth: number, cellHeight: numb
   return gridData;
 }
 
-export async function recognizeDigit(gridData: Float32Array, inputShape: number[], model: tractjs.Model): Promise<number[]> {
-  const tensor = new tractjs.Tensor(gridData, inputShape);
-  const outputData = (await model.predict_one(tensor)).data;
-  const batchSize = inputShape[0];
+export async function recognizeDigits(gridTensor: tractjs.Tensor, model: tractjs.Model): Promise<number[]> {
+  const outputData = (await model.predict_one(gridTensor)).data;
+  const batchSize = gridTensor.shape[0];
   const outputLen = outputData.length / batchSize;
   const digits: number[] = [];
   for (let i = 0; i < batchSize; i++) {
@@ -70,18 +69,40 @@ export async function recognizeDigit(gridData: Float32Array, inputShape: number[
   return digits;
 }
 
+export function renderDigits(mat: cv.Mat, coord: Quadrangle, gridDigits: number[][]) {
+  const digitsMat = cv.Mat.zeros(400, 400, cv.CV_8UC4);
+  digitsMat.setTo(new cv.Scalar(1, 1, 1, 1));
+  const cellHeight = digitsMat.rows / gridDigits.length;
+  for (let i = 0; i < gridDigits.length; i++) {
+    const row = gridDigits[i];
+    for (let j = 0; j < row.length; j++) {
+      const digit = row[j];
+      // TODO: Properly select font size and set anchor point to middle
+      const cellWidth = digitsMat.cols / row.length;
+      const position = new cv.Point(j * cellWidth + 15, (i + 1) * cellHeight - 10);
+      cv.putText(digitsMat, `${digit}`, position, cv.FONT_HERSHEY_SIMPLEX, 1, new cv.Scalar(0, 0, 1, 1), 2);
+    }
+  }
+  // Merge into rendered mat
+  const renderedMat = cv.Mat.ones(mat.rows, mat.cols, cv.CV_8UC4);
+  transform(digitsMat, Quadrangle.fromSize(digitsMat.cols, digitsMat.rows), renderedMat, coord, new cv.Scalar(1, 1, 1, 1));
+  digitsMat.delete();
+  cv.multiply(mat, renderedMat, mat); // Luckily `mat` has white background...
+  renderedMat.delete();
+}
+
 export function writeImage(mat: cv.Mat, context: CanvasRenderingContext2D) {
   const data = new ImageData(new Uint8ClampedArray(mat.data), mat.cols, mat.rows);
   context.putImageData(data, 0, 0);
 }
 
-function transform(srcMat: cv.Mat, srcCoord: Quadrangle, dstMat: cv.Mat, dstCoord: Quadrangle) {
+function transform(srcMat: cv.Mat, srcCoord: Quadrangle, dstMat: cv.Mat, dstCoord: Quadrangle, border?: cv.Scalar) {
   const srcCoordMat = cv.matFromArray(4, 2, cv.CV_32F, srcCoord.toArray());
   const dstCoordMat = cv.matFromArray(4, 2, cv.CV_32F, dstCoord.toArray());
   const transformation = cv.getPerspectiveTransform(srcCoordMat, dstCoordMat);
   srcCoordMat.delete();
   dstCoordMat.delete();
-  cv.warpPerspective(srcMat, dstMat, transformation, dstMat.size());
+  cv.warpPerspective(srcMat, dstMat, transformation, dstMat.size(), cv.INTER_LINEAR, cv.BORDER_CONSTANT, border ?? new cv.Scalar());
   transformation.delete();
 }
 
