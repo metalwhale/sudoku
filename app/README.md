@@ -12,4 +12,14 @@
 - Launch:
   ```bash
   app$ yarn dev
+
+## Deploying
+- Generate `dist` to deploy on Github Pages:
+  ```bash
+  app$ cd www/
+  app$ BASE_URL="/sudoku/" yarn generate
+  ```
+- Serve the `dist` directory:
+  ```bash
+  app$ BASE_URL="/sudoku/" yarn start
   ```

@@ -1,8 +1,15 @@
 # sudoku
-Sudoku resolver
+Sudoku solver
 
 ## How to run
 - Follow instructions in [infra](./infra) and [app](./app)
+
+## Todos
+- [x] Deploy on Github Pages
+- [ ] Improve model accuracy
+- [ ] Improve performance
+- [ ] Solve memory issue
+- [ ] Properly detect grid coordinate
 
 ## Kudos
 ### References

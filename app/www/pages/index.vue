@@ -35,7 +35,7 @@ export default Vue.extend({
     const CELL_SIZE = 20;
     const CELLS_NUM_PER_DIM = 9;
     const INPUT_SHAPE = [CELLS_NUM_PER_DIM ** 2, CELL_SIZE, CELL_SIZE, 1];
-    const model = await tractjs.load("/model.onnx", {
+    const model = await tractjs.load("model.onnx", {
       inputFacts: {
         0: ["float32", INPUT_SHAPE],
       },
