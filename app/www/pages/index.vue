@@ -20,6 +20,8 @@ export default Vue.extend({
     };
   },
   async mounted() {
+    let idleTime: number | undefined = Date.now();
+    let gridDigits: number[][] = [];
     // Start camera
     const video = this.$refs.video as HTMLVideoElement;
     video.srcObject = await navigator.mediaDevices.getUserMedia({
@@ -52,27 +54,34 @@ export default Vue.extend({
       const gridMat = new cv.Mat(gridSize, gridSize, cv.CV_8UC3); // TODO: Use gray mode
       const gridCoord = detectGridCoord(mat, gridMat);
       if (gridCoord !== undefined) {
-        const gridData = extractData(gridMat, CELL_SIZE, CELL_SIZE);
-        const digits = await recognizeDigits(new tractjs.Tensor(gridData, INPUT_SHAPE), model);
-        const solution = wasm.solve(digits);
-        if (solution !== undefined) {
-          const gridDigits: number[][] = [];
-          for (let i = 0; i < solution.length / CELLS_NUM_PER_DIM; i++) {
-            const row = solution.slice(i * CELLS_NUM_PER_DIM, (i + 1) * CELLS_NUM_PER_DIM);
-            for (let j = 0; j < row.length; j++) {
-              // Do not show provided digits
-              if (digits[i * CELLS_NUM_PER_DIM + j] != 0) {
-                row[j] = 0;
+        idleTime = undefined;
+        if (gridDigits.length == 0) {
+          const gridData = extractData(gridMat, CELL_SIZE, CELL_SIZE);
+          const digits = await recognizeDigits(new tractjs.Tensor(gridData, INPUT_SHAPE), model);
+          const solution = wasm.solve(digits);
+          if (solution !== undefined) {
+            gridDigits = [];
+            for (let i = 0; i < solution.length / CELLS_NUM_PER_DIM; i++) {
+              const row = solution.slice(i * CELLS_NUM_PER_DIM, (i + 1) * CELLS_NUM_PER_DIM);
+              for (let j = 0; j < row.length; j++) {
+                // Do not show provided digits
+                if (digits[i * CELLS_NUM_PER_DIM + j] != 0) {
+                  row[j] = 0;
+                }
               }
+              gridDigits.push(row);
             }
-            gridDigits.push(row);
           }
-          renderDigits(mat, gridCoord, gridDigits);
-        } else {
-          console.log("No solution.");
         }
+        renderDigits(mat, gridCoord, gridDigits);
         for (let point of gridCoord.points) {
           cv.circle(mat, new cv.Point(point.x, point.y), 8, new cv.Scalar(255, 255, 255, 255), cv.FILLED);
+        }
+      } else {
+        if (idleTime === undefined) {
+          idleTime = Date.now();
+        } else if (Date.now() - idleTime > 2000) {
+          gridDigits = [];
         }
       }
       writeImage(mat, context);
