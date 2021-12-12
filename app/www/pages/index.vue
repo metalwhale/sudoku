@@ -53,7 +53,7 @@ export default Vue.extend({
       const gridSize = CELL_SIZE * CELLS_NUM_PER_DIM;
       const gridMat = new cv.Mat(gridSize, gridSize, cv.CV_8UC3); // TODO: Use gray mode
       const gridCoord = detectGridCoord(mat, gridMat);
-      if (gridCoord !== undefined) {
+      if (gridCoord !== undefined && gridCoord.points.every((p) => p.x != 0 && p.y != 0)) {
         idleTime = undefined;
         if (gridDigits.length == 0) {
           const gridData = extractData(gridMat, CELL_SIZE, CELL_SIZE);
@@ -74,13 +74,10 @@ export default Vue.extend({
           }
         }
         renderDigits(mat, gridCoord, gridDigits);
-        for (let point of gridCoord.points) {
-          cv.circle(mat, new cv.Point(point.x, point.y), 8, new cv.Scalar(255, 255, 255, 255), cv.FILLED);
-        }
       } else {
         if (idleTime === undefined) {
           idleTime = Date.now();
-        } else if (Date.now() - idleTime > 2000) {
+        } else if (Date.now() - idleTime > 500) {
           gridDigits = [];
         }
       }

@@ -6,8 +6,8 @@ Sudoku solver
 
 ## Todos
 - [x] Deploy on Github Pages
-- [ ] Improve model accuracy
-- [ ] Improve performance
+- [ ] Further improve model accuracy
+- [ ] Further improve performance
 - [ ] Solve memory issue
 - [ ] Properly detect grid coordinate
 
