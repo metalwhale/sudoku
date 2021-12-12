@@ -11,8 +11,12 @@ Sudoku solver
 - [ ] Solve memory issue
 - [ ] Properly detect grid coordinate
 
+## How it looks
+(I took the puzzles from [this site](https://www.websudoku.com/))\
+![screencast](docs/screencast.gif)
+
 ## Kudos
-### References
+### Inspired by
 - [A WebAssembly Powered Augmented Reality Sudoku Solver](https://blog.scottlogic.com/2020/01/03/webassembly-sudoku-solver.html)
 
 ### Powered by
